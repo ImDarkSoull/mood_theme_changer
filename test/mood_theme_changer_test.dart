@@ -5,8 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('MoodEnum', () {
-    test('contains 7 moods', () {
-      expect(UserMood.values.length, 7);
+    test('contains 8 moods', () {
+      expect(UserMood.values.length, 8);
     });
   });
 

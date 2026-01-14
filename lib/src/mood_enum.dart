@@ -1,4 +1,3 @@
-
 enum UserMood {
   happy,
   calm,
