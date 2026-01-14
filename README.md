@@ -14,6 +14,10 @@ A powerful and flexible Flutter package for dynamic theme switching based on use
 - 🌈 **Material 3 Ready** - Full support for Material Design 3
 - 📱 **Production Ready** - Null-safe, tested, and optimized
 
+## 📸 Preview
+
+<img src="https://github.com/ImDarkSoull/mood_theme_changer/blob/main/example/assets/demo.gif" width="400" alt="Demo GIF" />
+
 ## 📦 Installation
 
 Add this to your package's `pubspec.yaml` file:
