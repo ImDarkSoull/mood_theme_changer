@@ -16,7 +16,7 @@ A powerful and flexible Flutter package for dynamic theme switching based on use
 
 ## 📸 Preview
 
-<img src="https://github.com/ImDarkSoull/mood_theme_changer/blob/main/example/assets/demo.gif" width="400" alt="Demo GIF" />
+<img src="https://raw.githubusercontent.com/ImDarkSoull/mood_theme_changer/main/example/assets/demo.gif" width="400" alt="Demo GIF" />
 
 ## 📦 Installation
 
