@@ -24,7 +24,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  mood_theme_changer: ^1.0.0
+  mood_theme_changer: ^latest_version
 ```
 
 Then run:
