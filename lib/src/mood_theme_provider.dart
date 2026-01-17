@@ -241,7 +241,7 @@ class MoodThemeProviderState extends State<MoodThemeProvider> {
       if (seedColor != null) {
         await prefs.setInt(
           '${widget.prefsKey}_custom_${mood.name}_seed',
-          seedColor.value,
+          seedColor.toARGB32(),
         );
       }
       if (brightness != null) {

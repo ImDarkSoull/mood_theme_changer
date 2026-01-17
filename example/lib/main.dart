@@ -194,7 +194,7 @@ class MoodSelectorScreen extends StatelessWidget {
                 Text(
                   'Active Theme',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
                     letterSpacing: 1,
                   ),
                 ),
@@ -261,13 +261,13 @@ class _QuickSelectGrid extends StatelessWidget {
               border: Border.all(
                 color: isSelected
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.outlineVariant.withOpacity(0.5),
+                    : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.4),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -522,7 +522,7 @@ class _ColorPickerButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant,
+          color: theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: theme.colorScheme.primary, width: 2),
         ),
@@ -587,7 +587,7 @@ class _ColorPickerModal extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -617,7 +617,7 @@ class _ColorPickerModal extends StatelessWidget {
                 final currentSeed =
                     provider.moodThemes[moodDef.mood]?.seedColor ??
                     Colors.transparent;
-                final isSelected = color.value == currentSeed.value;
+                final isSelected = color.toARGB32() == currentSeed.toARGB32();
 
                 return GestureDetector(
                   onTap: () =>
@@ -632,7 +632,7 @@ class _ColorPickerModal extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: color.withOpacity(0.3),
+                          color: color.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -681,7 +681,7 @@ class _ColorPickerModal extends StatelessWidget {
                 width: 1,
               ),
             ),
-            tileColor: theme.colorScheme.surfaceContainerHighest.withOpacity(
+            tileColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha:
               0.5,
             ),
           ),
@@ -693,8 +693,8 @@ class _ColorPickerModal extends StatelessWidget {
                   onPressed: () => provider.resetMoodColor(moodDef.mood),
                   icon: Icons.refresh,
                   label: 'Reset',
-                  backgroundColor: theme.colorScheme.surfaceVariant,
-                  foregroundColor: theme.colorScheme.onSurfaceVariant,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onSecondary,
                 ),
               ),
               const SizedBox(width: 12),
