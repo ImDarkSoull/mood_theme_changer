@@ -60,6 +60,26 @@ class MyApp extends StatelessWidget {
   }
 }
 ```
+### Zero-Flicker Setup (Recommended)
+To prevent the default theme from "flashing" for a split second on startup, pass a pre-loaded instance of `SharedPreferences`:
+
+```dart
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  runApp(MyApp(prefs: prefs));
+}
+
+// In your Widget tree:
+MoodThemeProvider(
+  savedPrefs: prefs, // Instant, synchronous theme loading
+  child: ...
+)
+```
+
+**What happens if you don't use `savedPrefs`?**
+If you omit `savedPrefs`, the package will fetch the settings asychronously. During that short fetch time (milliseconds), Flutter will render the default initial theme before "snapping" to your custom theme once the data arrives. Using `savedPrefs` ensures the correct theme is ready on the very first frame.
+
 
 ### 2. Change moods anywhere in your app
 
@@ -140,7 +160,7 @@ MoodThemeProvider(
 )
 ```
 
-### Complete Custom Theme
+## 🎨 Customizing Themes
 
 Provide a complete `ThemeData` object:
 
@@ -160,6 +180,31 @@ MoodThemeProvider(
   child: MyApp(),
 )
 ```
+
+### Update Mood Theme
+You can update a mood's seed color or brightness at runtime:
+
+```dart
+final provider = MoodThemeProvider.of(context);
+
+// Change both seed color and brightness
+provider.updateMoodTheme(
+  UserMood.happy,
+  seedColor: Colors.deepPurple,
+  brightness: Brightness.dark,
+);
+
+// Or just one of them
+provider.updateMoodTheme(UserMood.calm, brightness: Brightness.light);
+```
+
+### Reset to Defaults
+If a user wants to go back to the library's original colors:
+
+```dart
+provider.resetMoodColor(UserMood.happy);
+```
+
 
 ### Using Asset Icons
 

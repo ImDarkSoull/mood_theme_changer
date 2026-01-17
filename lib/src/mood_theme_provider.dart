@@ -40,6 +40,10 @@ class MoodThemeProvider extends StatefulWidget {
   final Duration transitionDuration;
   final String prefsKey;
 
+  /// Optional SharedPreferences instance for synchronous initialization.
+  /// Used to prevent "flash of default content" on app restart.
+  final SharedPreferences? savedPrefs;
+
   const MoodThemeProvider({
     super.key,
     this.definitions,
@@ -49,6 +53,7 @@ class MoodThemeProvider extends StatefulWidget {
     this.initialMood = UserMood.happy,
     this.transitionDuration = const Duration(milliseconds: 600),
     this.prefsKey = 'mood_theme_changer_index',
+    this.savedPrefs,
   });
 
   static MoodThemeProviderState of(BuildContext context) {
@@ -66,6 +71,13 @@ class MoodThemeProvider extends StatefulWidget {
 class MoodThemeProviderState extends State<MoodThemeProvider> {
   late UserMood _currentMood;
   late Map<UserMood, MoodThemeConfig> _resolvedThemes;
+  int _themeVersion = 0;
+
+  /// Stores custom user seed colors per mood.
+  final Map<UserMood, Color> _customSeedColors = {};
+
+  /// Stores custom user brightness preference per mood.
+  final Map<UserMood, Brightness> _customBrightness = {};
 
   UserMood get currentMood => _currentMood;
   Map<UserMood, MoodThemeConfig> get moodThemes => _resolvedThemes;
@@ -73,9 +85,40 @@ class MoodThemeProviderState extends State<MoodThemeProvider> {
   @override
   void initState() {
     super.initState();
-    _currentMood = widget.initialMood;
+    if (widget.savedPrefs != null) {
+      _loadMoodSync(widget.savedPrefs!);
+      _loadCustomColorsSync(widget.savedPrefs!);
+    } else {
+      _currentMood = widget.initialMood;
+      _loadMood();
+      _loadCustomColors();
+    }
     _resolveThemes();
-    _loadMood();
+  }
+
+  void _loadMoodSync(SharedPreferences prefs) {
+    final index = prefs.getInt(widget.prefsKey);
+    if (index != null && index >= 0 && index < UserMood.values.length) {
+      _currentMood = UserMood.values[index];
+    } else {
+      _currentMood = widget.initialMood;
+    }
+  }
+
+  void _loadCustomColorsSync(SharedPreferences prefs) {
+    for (final mood in UserMood.values) {
+      final seedKey = '${widget.prefsKey}_custom_${mood.name}_seed';
+      final colorValue = prefs.getInt(seedKey);
+      if (colorValue != null) {
+        _customSeedColors[mood] = Color(colorValue);
+      }
+
+      final brightnessKey = '${widget.prefsKey}_custom_${mood.name}_brightness';
+      final brightnessValue = prefs.getInt(brightnessKey);
+      if (brightnessValue != null) {
+        _customBrightness[mood] = Brightness.values[brightnessValue];
+      }
+    }
   }
 
   void _resolveThemes() {
@@ -93,7 +136,20 @@ class MoodThemeProviderState extends State<MoodThemeProvider> {
 
     if (widget.overrides != null) base.addAll(widget.overrides!);
 
+    // Apply custom stored properties if any
+    for (final mood in UserMood.values) {
+      if (_customSeedColors.containsKey(mood) ||
+          _customBrightness.containsKey(mood)) {
+        final config = base[mood] ?? const MoodThemeConfig();
+        base[mood] = config.copyWith(
+          seedColor: _customSeedColors[mood],
+          brightness: _customBrightness[mood],
+        );
+      }
+    }
+
     _resolvedThemes = base;
+    _themeVersion++;
   }
 
   @override
@@ -121,6 +177,38 @@ class MoodThemeProviderState extends State<MoodThemeProvider> {
     }
   }
 
+  Future<void> _loadCustomColors() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      bool changed = false;
+
+      for (final mood in UserMood.values) {
+        // Load custom seed color
+        final seedKey = '${widget.prefsKey}_custom_${mood.name}_seed';
+        final colorValue = prefs.getInt(seedKey);
+        if (colorValue != null) {
+          _customSeedColors[mood] = Color(colorValue);
+          changed = true;
+        }
+
+        // Load custom brightness
+        final brightnessKey =
+            '${widget.prefsKey}_custom_${mood.name}_brightness';
+        final brightnessValue = prefs.getInt(brightnessKey);
+        if (brightnessValue != null) {
+          _customBrightness[mood] = Brightness.values[brightnessValue];
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        setState(() => _resolveThemes());
+      }
+    } catch (e) {
+      debugPrint('Error loading custom properties: $e');
+    }
+  }
+
   Future<void> setMood(UserMood mood) async {
     if (_currentMood == mood || !_resolvedThemes.containsKey(mood)) return;
     setState(() => _currentMood = mood);
@@ -132,6 +220,68 @@ class MoodThemeProviderState extends State<MoodThemeProvider> {
     }
   }
 
+  /// Updates the theme (seed color and/or brightness) for a mood and persists it.
+  Future<void> updateMoodTheme(
+    UserMood mood, {
+    Color? seedColor,
+    Brightness? brightness,
+  }) async {
+    setState(() {
+      if (seedColor != null) {
+        _customSeedColors[mood] = seedColor;
+      }
+      if (brightness != null) {
+        _customBrightness[mood] = brightness;
+      }
+      _resolveThemes();
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (seedColor != null) {
+        await prefs.setInt(
+          '${widget.prefsKey}_custom_${mood.name}_seed',
+          seedColor.value,
+        );
+      }
+      if (brightness != null) {
+        await prefs.setInt(
+          '${widget.prefsKey}_custom_${mood.name}_brightness',
+          brightness.index,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving custom theme properties: $e');
+    }
+  }
+
+  /// Alias only for backward compatibility for color updates.
+  Future<void> updateMoodColor(UserMood mood, Color color) async {
+    await updateMoodTheme(mood, seedColor: color);
+  }
+
+  /// Resets a specific mood's customization to defaults.
+  Future<void> resetMoodColor(UserMood mood) async {
+    if (!_customSeedColors.containsKey(mood) &&
+        !_customBrightness.containsKey(mood)) {
+      return;
+    }
+
+    setState(() {
+      _customSeedColors.remove(mood);
+      _customBrightness.remove(mood);
+      _resolveThemes();
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('${widget.prefsKey}_custom_${mood.name}_seed');
+      await prefs.remove('${widget.prefsKey}_custom_${mood.name}_brightness');
+    } catch (e) {
+      debugPrint('Error resetting custom properties: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final config =
@@ -139,6 +289,7 @@ class MoodThemeProviderState extends State<MoodThemeProvider> {
     return _InheritedMoodProvider(
       state: this,
       currentMood: _currentMood,
+      themeVersion: _themeVersion,
       child: AnimatedTheme(
         data: config.toThemeData(),
         duration: widget.transitionDuration,
@@ -152,12 +303,15 @@ class MoodThemeProviderState extends State<MoodThemeProvider> {
 class _InheritedMoodProvider extends InheritedWidget {
   final MoodThemeProviderState state;
   final UserMood currentMood;
+  final int themeVersion;
   const _InheritedMoodProvider({
     required this.state,
     required this.currentMood,
+    required this.themeVersion,
     required super.child,
   });
   @override
   bool updateShouldNotify(_InheritedMoodProvider oldWidget) =>
-      currentMood != oldWidget.currentMood;
+      currentMood != oldWidget.currentMood ||
+      themeVersion != oldWidget.themeVersion;
 }

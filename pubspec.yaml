@@ -1,6 +1,6 @@
 name: mood_theme_changer
 description: A Flutter package to dynamically change the Material 3 theme based on user moods with smooth transitions and persistence.
-version: 1.0.1
+version: 1.0.2
 homepage: https://github.com/ImDarkSoull/mood_theme_changer
 repository: https://github.com/ImDarkSoull/mood_theme_changer.git
 issue_tracker: https://github.com/ImDarkSoull/mood_theme_changer/issues

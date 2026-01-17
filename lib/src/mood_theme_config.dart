@@ -51,11 +51,27 @@ class MoodThemeConfig {
       useMaterial3: true,
       colorScheme: colorScheme,
       brightness: effectiveBrightness,
+      scaffoldBackgroundColor: colorScheme.surface,
       appBarTheme: AppBarTheme(
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
       ),
+    );
+  }
+
+  /// Creates a copy of this config with the given fields replaced.
+  MoodThemeConfig copyWith({
+    ThemeData? customTheme,
+    Color? seedColor,
+    Brightness? brightness,
+    double? surfaceTintFactor,
+  }) {
+    return MoodThemeConfig(
+      customTheme: customTheme ?? this.customTheme,
+      seedColor: seedColor ?? this.seedColor,
+      brightness: brightness ?? this.brightness,
+      surfaceTintFactor: surfaceTintFactor ?? this.surfaceTintFactor,
     );
   }
 }
